@@ -240,6 +240,35 @@ describe('CredentialsPermissionChecker', () => {
 			);
 		});
 
+		it('should check generic auth credential type selected by genericAuthType', async () => {
+			const genericCredentialNode: INode = {
+				...httpRequestNode,
+				parameters: {
+					authentication: 'genericCredentialType',
+					genericAuthType: 'httpBearerAuth',
+				},
+			};
+
+			nodeTypes.getByNameAndVersion.mockReturnValue({
+				description: {
+					credentials: [],
+				},
+			} as never);
+
+			sharedCredentialsRepository.getFilteredAccessibleCredentials.mockResolvedValue([
+				staleCredentialId,
+			]);
+			credentialsRepository.find.mockResolvedValue([]);
+
+			await expect(
+				permissionChecker.check(workflowId, [genericCredentialNode]),
+			).resolves.not.toThrow();
+
+			expect(sharedCredentialsRepository.getFilteredAccessibleCredentials).toHaveBeenCalledWith(
+				[teamProject.id],
+				[staleCredentialId],
+			);
+		});
 		it('should fall back to checking all credentials if node type cannot be resolved', async () => {
 			nodeTypes.getByNameAndVersion.mockImplementation(() => {
 				throw new Error('Unknown node type');
